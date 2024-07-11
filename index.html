@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Forecast System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f8ff;
+        }
+        body, html {
+            overflow: hidden;
+        }
+        body {
+            transform: scale(0.9); /* Scale content down */
+        }
+        h1 {
+            text-align: center;
+            left: -20px;
+            position: absolute;
+            top: -25px;
+        }
+        input, button, select {
+            margin: 10px 0;
+            padding: 10px;
+            font-size: 16px;
+            width: 200px; /* Adjust width as needed */
+            box-sizing: border-box; /* Include padding and border in element's total width and height */
+        }
+        #weather-container {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: flex-start;
+            width: 100%;
+            margin-bottom: 20px;
+            max-width: 1000px; /* Limit the maximum width */
+        }
+        #city-form {
+            margin-top: 80px;
+            padding-left: 50px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start; /* Align items to the left */
+        }
+        #weather {
+            flex: 2;
+            text-align: right;
+        }
+        .weather-icon {
+            width: 100px;
+            height: 100px;
+            padding-right: 20px;
+        }
+        .forecast-detail {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+            margin: 5px;
+        }
+        .weather-detail {
+            display: flex;
+            margin-top: 20px;
+            justify-content: flex-end; /* Align weather details to the right */
+            align-items: flex-end;
+        }
+        .weather-detail div, .forecast-day {
+            padding: 30px;
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.1);
+            text-align: left; /* Ensure text alignment is left within the details */
+            margin: 5px;
+        }
+        .popup {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .popup-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+            position: relative;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="greeting"><img class="heading-icon" src="weatherforecast.jpg" style="width: 200px; height: 100px;"></h1>
+    <div id="weather-container">
+        <div id="city-form">
+            <select id="city">
+                <option value="" disabled selected>Select your city</option>
+                <option value="Bangalore">Bangalore</option>
+                <option value="New York">New York</option>
+                <option value="Tokyo">Tokyo</option>
+                <option value="London">London</option>
+                <option value="Paris">Paris</option>
+                <option value="Chennai">Chennai</option>
+                <option value="Kochi">Kochi</option>
+                <option value="Mumbai">Mumbai</option>
+                <option value="Kolkata">Kolkata</option>
+                <option value="Delhi">Delhi</option>
+            </select>
+            <button onclick="getWeather()">Get Weather</button>
+        </div>
+        <div id="weather"></div>
+    </div>
+    <div id="forecast"></div>
+
+    <!-- Popup for detailed weather -->
+    <div class="popup" id="weatherPopup">
+        <div class="popup-content">
+            <span class="close" onclick="closePopup()">&times;</span>
+            <h2 id="popupTitle">Weather Details</h2>
+            <div id="popupContent"></div>
+        </div>
+    </div>
+
+    <script src="weather.js"></script>
+    <script>
+        // Load the WebAssembly module and display the greeting
+        Module.onRuntimeInitialized = () => {
+            const greeting = Module._getGreeting();
+            document.getElementById('greeting').innerText = UTF8ToString(greeting);
+        };
+
+        async function getWeather() {
+            const city = document.getElementById('city').value;
+            const apiKey = 'b1c111a9aba64dce91b50028241107'; // Your WeatherAPI.com API key
+            const response = await fetch(`https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${city}&days=7`);
+            if (!response.ok) {
+                document.getElementById('weather').innerText = 'Error: City not found or API limit reached.';
+                return;
+            }
+            const data = await response.json();
+            displayWeather(data);
+            displayForecast(data);
+        }
+
+        function displayWeather(data) {
+            const weatherDiv = document.getElementById('weather');
+            weatherDiv.innerHTML = `
+                <div style="display: flex; flex-direction: column; align-items: center;">
+                    <h2 style="margin-top: 75px;">Today's Weather in ${data.location.name}</h2>
+                    <img class="weather-icon" src="https:${data.current.condition.icon}" alt="${data.current.condition.text}">
+                    <p><strong>Temperature:</strong> ${data.current.temp_c} °C</p>
+                    <p style="margin-top: 0px;"><strong>Weather:</strong> ${data.current.condition.text}</p>
+                </div>
+                <div class="weather-detail" style="display: flex; justify-content: space-between; margin-top: 10px;">
+                    <div style="text-align: left;">
+                        <p><strong>Humidity:</strong> ${data.current.humidity}%</p>
+                        <p><strong>Wind Speed:</strong> ${data.current.wind_kph} kph</p>
+                        <p><strong>Pressure:</strong> ${data.current.pressure_mb} mb</p>
+                    </div>
+                    <div style="text-align: left;">
+                        <p><strong>Feels Like:</strong> ${data.current.feelslike_c} °C</p>
+                        <p><strong>Visibility:</strong> ${data.current.vis_km} km</p>
+                        <p><strong>UV Index:</strong> ${data.current.uv}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function displayForecast(data) {
+            const forecastDiv = document.getElementById('forecast');
+            forecastDiv.innerHTML = '<h2>7-Day Forecast</h2>';
+            const forecastDays = data.forecast.forecastday;
+
+            // Create a container for the forecast days
+            const forecastContainer = document.createElement('div');
+            forecastContainer.classList.add('forecast-detail');
+
+            forecastDays.forEach(day => {
+                const date = new Date(day.date).toDateString();
+
+                // Create a div for each forecast day
+                const forecastDayDiv = document.createElement('div');
+                forecastDayDiv.classList.add('forecast-day');
+
+                // Populate the forecast day content
+                forecastDayDiv.innerHTML = `
+                    <p><strong>${date}</strong></p>
+                    <img class="weather-icon" src="https:${day.day.condition.icon}" alt="${day.day.condition.text}">
+                `;
+
+                // Add click event to show popup with detailed weather
+                forecastDayDiv.addEventListener('click', () => openPopup(day));
+
+                // Append each forecast day to the container
+                forecastContainer.appendChild(forecastDayDiv);
+            });
+
+            // Append the container to the forecastDiv
+            forecastDiv.appendChild(forecastContainer);
+        }
+
+        // Function to open the popup and display detailed weather
+        function openPopup(dayData) {
+            const popup = document.getElementById('weatherPopup');
+            const popupTitle = document.getElementById('popupTitle');
+            const popupContent = document.getElementById('popupContent');
+
+            // Clear previous content
+            popupContent.innerHTML = '';
+
+            // Populate with weather details for the selected day
+            const details = `
+                <p><strong>Date:</strong> ${new Date(dayData.date).toDateString()}</p>
+                <img class="weather-icon" src="https:${dayData.day.condition.icon}" alt="${dayData.day.condition.text}">
+                <p><strong>Max Temperature:</strong> ${dayData.day.maxtemp_c} °C</p>
+                <p><strong>Min Temperature:</strong> ${dayData.day.mintemp_c} °C</p>
+                <p><strong>Average Temperature:</strong> ${dayData.day.avgtemp_c} °C</p>
+                <p><strong>Max Wind:</strong> ${dayData.day.maxwind_kph} kph</p>
+                <p><strong>Total Precipitation:</strong> ${dayData.day.totalprecip_mm} mm</p>
+                <p><strong>Average Visibility:</strong> ${dayData.day.avgvis_km} km</p>
+                <p><strong>Average Humidity:</strong> ${dayData.day.avghumidity}%</p>
+                <p><strong>UV Index:</strong> ${dayData.day.uv}</p>
+            `;
+
+            popupTitle.innerText = `Weather Details for ${dayData.date}`;
+            popupContent.innerHTML = details;
+
+            // Display the popup
+            popup.style.display = 'block';
+        }
+
+        // Function to close the popup
+        function closePopup() {
+            const popup = document.getElementById('weatherPopup');
+            popup.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
