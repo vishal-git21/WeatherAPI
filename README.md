@@ -41,4 +41,9 @@ This project is a web application that allows users to check the current weather
 ![image](https://github.com/vishal-git21/WeatherAPI/assets/68605177/04f90585-9a0b-4eaa-88ff-166bc557aa4a)
 
 
+
+
+
+
+
 ![image](https://github.com/vishal-git21/WeatherAPI/assets/68605177/f35b804f-ec77-4019-bcd8-f9a28c57fef5)
